@@ -6,7 +6,7 @@ var MongoClient = mongodb.MongoClient;
 // var moment = require('moment-timezone');
 var Promise = require('bluebird');
 
-var url = "mongodb://127.0.0.1:27017/excelReportCloud";
+var url = "mongodb://35.192.28.117:27017/excelReportCloud";
 
 
 function getTowerMetaData(towerId) {
@@ -79,67 +79,75 @@ function tableCheck(tableName) {
 
 
 exports.getSiteData = function(event) {
-    console.log(event.data);
- //    Promise.mapSeries(towerIds, function(singleTowerId) {
-	// 	var dataById = {};
-	// 	// dataById[singleTowerId] = [];
-	// 	dataById[singleTowerId] = {};
-	// 	return getTowerMetaData(singleTowerId).then(function(metaData) {
-	// 		var metaDataJson = JSON.parse(metaData).message;
-	// 		// console.log(metaDataJson['name']);
-	// 			var obj_metaDataJson = JSON.parse(metaDataJson['attribs']);
+    const pubsubMsg = event.data;
+    const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
+    var site = JSON.parse(siteStr);
+    console.log(site['name']);
+//    console.log("site>>>>");
+//    console.log(site);
+    var currentStartMin = 25137030;//new tz().startOf("day").unix();
+    var currentEndMin = 25137749;
 
-	// 			if(obj_metaDataJson[0]['type'] ==='OFFLINE') {
-	// 			return getTowerRawData(singleTowerId, currentStartMin, currentEndMin).then(function(rawData) {
-	// 				var rawDataJson = JSON.parse(rawData).message;
-	// 				// console.log(rawDataJson);
-	// 				return rawDataJson;
-	// 			}).then(function(rawDataJsonObj) {
+    Promise.mapSeries(site['towers'], function(singleTowerId) {
+	 	var dataById = {};
+	 	// dataById[singleTowerId] = [];
+	 	dataById[singleTowerId] = {};
+	 	return getTowerMetaData(singleTowerId).then(function(metaData) {
+	 		var metaDataJson = JSON.parse(metaData).message;
+	 		// console.log(metaDataJson['name']);
+	 			var obj_metaDataJson = JSON.parse(metaDataJson['attribs']);
 
-	// 				var dataDict = {};
-	// 				dataDict['gen'] = {};
-	// 				obj_metaDataJson.forEach(function(specValue, specIndex) {
-	// 					var specFactorId = specValue.id;
-	// 					dataDict[specFactorId] = [];
-	// 					// dataDict['timestamp'] = [];
+	 			if(obj_metaDataJson[0]['type'] ==='OFFLINE') {
+	 			return getTowerRawData(singleTowerId, currentStartMin, currentEndMin).then(function(rawData) {
+	 				var rawDataJson = JSON.parse(rawData).message;
+	 				// console.log(rawDataJson);
+	 				return rawDataJson;
+	 			}).then(function(rawDataJsonObj) {
 
-	// 					rawDataJsonObj.forEach(function(specRawValue, specRawIndex) {
-	// 						if(specRawValue[specFactorId] !== undefined) {
-	// 							// console.log(specRawValue[specFactorId]);
-	// 							dataDict[specFactorId].push(specRawValue[specFactorId]);
-	// 							// dataDict['timestamp'].push(specRawValue['timestamp']);
-	// 						}
-	// 					});
-	// 					dataDict[specFactorId].push({'low':specValue.low,'high':specValue.high,'type':specValue.type});
-	// 				});
-	// 				// dataDict['name'] = metaDataJson['name'];
-	// 				dataDict['gen']['name'] = metaDataJson['name'];
-	// 				dataDict['gen']['type'] = metaDataJson['type'];
-	// 				return dataDict;
+	 				var dataDict = {};
+	 				dataDict['gen'] = {};
+	 				obj_metaDataJson.forEach(function(specValue, specIndex) {
+	 					var specFactorId = specValue.id;
+	 					dataDict[specFactorId] = [];
+	 					// dataDict['timestamp'] = [];
 
-	// 			}).then(function(rawDataReturn) {
-	// 				return Promise.resolve(rawDataReturn);
-	// 			}).catch(function(err) {
-	// 				console.log("firing error");
-	// 			});
+	 					rawDataJsonObj.forEach(function(specRawValue, specRawIndex) {
+	 						if(specRawValue[specFactorId] !== undefined) {
+	 							// console.log(specRawValue[specFactorId]);
+	 							dataDict[specFactorId].push(specRawValue[specFactorId]);
+	 							// dataDict['timestamp'].push(specRawValue['timestamp']);
+	 						}
+	 					});
+	 					dataDict[specFactorId].push({'low':specValue.low,'high':specValue.high,'type':specValue.type});
+	 				});
+	 				// dataDict['name'] = metaDataJson['name'];
+	 				dataDict['gen']['name'] = metaDataJson['name'];
+	 				dataDict['gen']['type'] = metaDataJson['type'];
+	 				return dataDict;
 
-	// 		}
+	 			}).then(function(rawDataReturn) {
+	 				return Promise.resolve(rawDataReturn);
+	 			}).catch(function(err) {
+	 				console.log("firing error");
+	 			});
+
+	 		}
 
 
-	// 	}).then(function(metaDataReturn) {
-	// 		// dataById[singleTowerId].push(metaDataReturn);
-	// 		dataById[singleTowerId] = metaDataReturn;
-	// 		return Promise.resolve(dataById);
-	// 	}).catch(function(err) {
-	// 		console.log("error fired on single tower metadata>>>>" + err);
-	// 		console.log(singleTowerId);
-	// 	});
+	 	}).then(function(metaDataReturn) {
+	 		// dataById[singleTowerId].push(metaDataReturn);
+	 		dataById[singleTowerId] = metaDataReturn;
+	 		return Promise.resolve(dataById);
+	 	}).catch(function(err) {
+	 		console.log("error fired on single tower metadata>>>>" + err);
+	 		console.log(singleTowerId);
+	 	});
 
-	// }).then(function(siteListReturn) {
-	// 	// console.log("data insert to db");
-	// 	tableCheck(site['_id']);
-	// 	insertDataToDb(currentStartMin,site['_id'],siteListReturn,site['name']);
-	// }).catch(function(err) {
-	// 	console.log("site error " + err);
-	// });
+	 }).then(function(siteListReturn) {
+	 	// console.log("data insert to db");
+	 	tableCheck(site['id']);
+	 	insertDataToDb(currentStartMin,site['id'],siteListReturn,site['name']);
+	 }).catch(function(err) {
+	 	console.log("site error " + err);
+	 });
 };
