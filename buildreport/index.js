@@ -230,7 +230,7 @@ function createFirstSheet(firstSheet,firstSheetHeader2) {
 	firstSheet.cell(header1IndexStart,1,header1IndexEnd,21).style(header1Style);
 
 	firstSheet.addImage({
-	    path: '/home/glib/Downloads/flux.png',
+	    path: '/home/hardik/excelReport/Img/flux.png',
 	    type: 'picture',
 	    position: {
 	        type: 'twoCellAnchor',
@@ -312,6 +312,8 @@ function createSecondSheet(secondSheet,firstSheetHeader2) {
 	secondSheet.column(firstSheetHeader2.length+2).setWidth(20);
 	secondSheet.cell(header2IndexStart,firstSheetHeader2.length+1).string('Remarks').style(header3Style);
 	secondSheet.cell(header2IndexStart,firstSheetHeader2.length+2).string('Observation and remarks on next day').style(header3Style);
+
+	secondSheet.cell(dataIndexStart,1,dataIndexEnd,firstSheetHeader2.length).style(generalBorder);
 }
 
 

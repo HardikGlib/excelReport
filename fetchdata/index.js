@@ -83,14 +83,12 @@ exports.getSiteData = function(event) {
     const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
     var site = JSON.parse(siteStr);
     console.log(site['name']);
-//    console.log("site>>>>");
-//    console.log(site);
     var currentStart = new tz().startOf("day").unix();
 	var currentEnd = new tz().endOf("day").unix();
 	var currentStartMin = currentStart/60;
 	var currentEndMin = currentEnd/60;
 
-    Promise.mapSeries(site['towers'], function(singleTowerId) {
+    return Promise.mapSeries(site['towers'], function(singleTowerId) {
 	 	var dataById = {};
 	 	// dataById[singleTowerId] = [];
 	 	dataById[singleTowerId] = {};
