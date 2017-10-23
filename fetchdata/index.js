@@ -85,8 +85,10 @@ exports.getSiteData = function(event) {
     console.log(site['name']);
 //    console.log("site>>>>");
 //    console.log(site);
-    var currentStartMin = 25137030;//new tz().startOf("day").unix();
-    var currentEndMin = 25137749;
+    var currentStart = new tz().startOf("day").unix();
+	var currentEnd = new tz().endOf("day").unix();
+	var currentStartMin = currentStart/60;
+	var currentEndMin = currentEnd/60;
 
     Promise.mapSeries(site['towers'], function(singleTowerId) {
 	 	var dataById = {};
