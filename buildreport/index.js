@@ -2,7 +2,9 @@ var excel = require('excel4node');
 var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var tz = require('moment');
-//const Storage = require('@google-cloud/storage');
+var nodemailer = require('nodemailer');
+const Storage = require('@google-cloud/storage');
+var Promise = require('bluebird');
 
 var url = "mongodb://35.194.53.124:27017/excelReportCloud";
 
@@ -243,8 +245,8 @@ function createFirstSheet(firstSheet,firstSheetHeader2) {
 	firstSheet.cell(header1IndexStart,1,header1IndexEnd,21).style(header1Style);
 
 	firstSheet.addImage({
-		path: 'gs://${build-report}/${flux.png}'
-//	    path: '/home/hardik/excelReport/Img/flux.png',
+//    	    path: 'gs://build-report/nav_logo.png',
+	    path: 'flux.png',
 	    type: 'picture',
 	    position: {
 	        type: 'twoCellAnchor',
@@ -337,7 +339,7 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 	var generalInfoSite = siteMonthData[0];
 
 	newData = {};
-
+	console.log("enter for new sheet>>>");
 	siteMonthData.forEach(function(oneRowValue, oneRowIndex) {
 		newData[oneRowValue['timestamp']] = [];
 		// var dataTower = oneRowValue['data'];
@@ -426,7 +428,7 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 			});
 		})
 	});
-
+	console.log(generalInfoSite['site']);
 	if(boolUnwantedSheet) {
 
 		// // console.log(newData);
@@ -441,16 +443,16 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 		    console.log(generalInfoSite['site'] + ".xlsx  # created");
 		});
 
-		var mailOptions = {
-            from: '"Chembond Flux" <admin@chembondflux.com>', // sender address
-            to: email, // list of receivers
-            subject: '[Chembond Flux] Site Daily Report ✔', // Subject line
-            attachments: [{   // utf-8 string as an attachment
-                filename: generalInfoSite['site'] + '.xlsx',
-                path: generalInfoSite['site'] + '.xlsx'
-            }]
-        };
-        transporter.sendMail(mailOptions);
+//		var mailOptions = {
+//            from: '"Chembond Flux" <admin@chembondflux.com>', // sender address
+//            to: email, // list of receivers
+//           subject: '[Chembond Flux] Site Daily Report ✔', // Subject line
+//            attachments: [{   // utf-8 string as an attachment
+//                filename: generalInfoSite['site'] + '.xlsx',
+//                path: generalInfoSite['site'] + '.xlsx'
+//            }]
+//        };
+//        transporter.sendMail(mailOptions);
 	}
 }
 
@@ -489,8 +491,8 @@ function writeDbToExcel() {
 
 		// if (err) throw err;
 		db.listCollections().toArray(function(err, collInfos) {
-
-			collInfos.forEach(function(tableName) {
+			Promise.map(collInfos, function(tableName) {
+//			collInfos.forEach(function(tableName) {
 				var tableNameSite = tableName['name'];
 				console.log(tableNameSite);
 				db.collection(tableNameSite).find({"timestamp":{$gte:currentMonthStartMin}}).toArray(function(err, siteData) {
@@ -505,5 +507,6 @@ function writeDbToExcel() {
 
 
 exports.updateDb = function(event) {
+	console.log("first call enter>>>");
     writeDbToExcel();
 };
