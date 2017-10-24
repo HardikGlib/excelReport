@@ -6,7 +6,7 @@ var MongoClient = mongodb.MongoClient;
 // var moment = require('moment-timezone');
 var Promise = require('bluebird');
 
-var url = "mongodb://35.192.28.117:27017/excelReportCloud";
+var url = "mongodb://35.194.53.124:27017/excelReportCloud";
 
 
 function getTowerMetaData(towerId) {

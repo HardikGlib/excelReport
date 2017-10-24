@@ -2,13 +2,13 @@ var excel = require('excel4node');
 var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var tz = require('moment');
-const Storage = require('@google-cloud/storage');
+//const Storage = require('@google-cloud/storage');
 
-var url = "mongodb://35.192.28.117:27017/excelReportCloud";
+var url = "mongodb://35.194.53.124:27017/excelReportCloud";
 
 var email = 'hardik@glib.ai';
 
-const storage = Storage();
+//const storage = Storage();
 
 var transporter = nodemailer.createTransport({
     service: 'zoho',
