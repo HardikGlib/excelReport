@@ -2,8 +2,21 @@ var excel = require('excel4node');
 var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var tz = require('moment');
+const Storage = require('@google-cloud/storage');
 
 var url = "mongodb://35.192.28.117:27017/excelReportCloud";
+
+var email = 'hardik@glib.ai';
+
+const storage = Storage();
+
+var transporter = nodemailer.createTransport({
+    service: 'zoho',
+    auth: {
+        user: 'admin@chembondflux.com',
+        pass: 'Turing123'
+    }
+});
 
 
 var header1IndexStart = 1
@@ -230,7 +243,8 @@ function createFirstSheet(firstSheet,firstSheetHeader2) {
 	firstSheet.cell(header1IndexStart,1,header1IndexEnd,21).style(header1Style);
 
 	firstSheet.addImage({
-	    path: '/home/hardik/excelReport/Img/flux.png',
+		path: 'gs://${build-report}/${flux.png}'
+//	    path: '/home/hardik/excelReport/Img/flux.png',
 	    type: 'picture',
 	    position: {
 	        type: 'twoCellAnchor',
@@ -368,8 +382,6 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 			}
 		});
 	});
-	// newData.sort();
-	// console.log(newData);
 	var dataListRowWise = [];
 
 	for(var dateObj in newData) {
@@ -419,18 +431,26 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 
 		// // console.log(newData);
 		var forthSheet = excelFile.addWorksheet('General comments, summary',generalOptions);
-		// var secondSheet = excelFile.addWorksheet(towerName + ' - make up',generalOptions);
-		// createSecondSheet(secondSheet);
-
 		// var thirdSheet = excelFile.addWorksheet(towerName + ' - cooling tower data',generalOptions);
 		// createThirdSheet(thirdSheet);
-		// if(towerNames) {
+
 		excelFile.write(generalInfoSite['site'] + '.xlsx', function (err, stats) {
 		    if (err) {
 		        console.error(err);
 		    }
 		    console.log(generalInfoSite['site'] + ".xlsx  # created");
 		});
+
+		var mailOptions = {
+            from: '"Chembond Flux" <admin@chembondflux.com>', // sender address
+            to: email, // list of receivers
+            subject: '[Chembond Flux] Site Daily Report ✔', // Subject line
+            attachments: [{   // utf-8 string as an attachment
+                filename: generalInfoSite['site'] + '.xlsx',
+                path: generalInfoSite['site'] + '.xlsx'
+            }]
+        };
+        transporter.sendMail(mailOptions);
 	}
 }
 
