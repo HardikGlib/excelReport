@@ -499,9 +499,8 @@ function storeDataFunction(sheetId, data, dateFrom, headerList,oneRowIndex) {
 function writeDbToExcel() {
 	var currentMonthStart = new tz().startOf("month").unix();
 	var currentMonthStartMin  = currentMonthStart/60;
-    MongoClient.connect(url, function(err, db) {
-
-        db.listCollections().toArray(function(err, collInfos) {
+    return MongoClient.connect(url).then(function(db) {
+        return db.listCollections().toArray().then(function(collInfos) {
             console.log(collInfos);
             return Promise.mapSeries(collInfos, function(tableName) {
 //    			collInfos.forEach(function(tableName) {
@@ -510,14 +509,19 @@ function writeDbToExcel() {
                 return db.collection(tableNameSite).find({"timestamp":{$gte:currentMonthStartMin}}).toArray().then(function(siteData){
                     return createSheet(siteData);
                 }).then(function(){
-                    return Promise.resolve('OK');
+                    return Promise.resolve('OK 1');
                 });
             }).then(function(){
                 console.log("db closes>>>>>>>>>>>>>>>>");
                 db.close();
+                return Promise.resolve('OK 2');
             }).catch(function(err) {
                 console.log("First promise error>>>>>>.");
             });
+        }).then(function() {
+            return Promise.resolve('OK 3');
+        }).catch(function(err) {
+            console.log("list connection error >>>>" + err);
         });
     });
 }
@@ -525,5 +529,5 @@ function writeDbToExcel() {
 
 exports.updateDb = function(event) {
 	console.log("first call enter>>>");
-    writeDbToExcel();
+    return writeDbToExcel();
 };
