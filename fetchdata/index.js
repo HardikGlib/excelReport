@@ -7,6 +7,7 @@ var MongoClient = mongodb.MongoClient;
 var Promise = require('bluebird');
 
 var url = "mongodb://35.202.5.161:27017/excelReportCloud";
+//var url = "mongodb://127.0.0.1:27017/excelReportCloud";
 
 
 function getTowerMetaData(towerId) {

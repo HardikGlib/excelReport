@@ -3,14 +3,13 @@ var mongodb = require('mongodb');
 var MongoClient = mongodb.MongoClient;
 var tz = require('moment');
 var nodemailer = require('nodemailer');
-const Storage = require('@google-cloud/storage');
 var Promise = require('bluebird');
 
 var url = "mongodb://35.202.5.161:27017/excelReportCloud";
+//var url = "mongodb://127.0.0.1:27017/excelReportV1";
 
 var email = 'hardik@glib.ai';
 
-//const storage = Storage();
 
 var transporter = nodemailer.createTransport({
     service: 'zoho',
@@ -339,11 +338,13 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 
 	newData = {};
 	console.log("enter for new sheet>>>");
+//	Promise.mapSeries(siteMonthData, function(oneRowValue) {
 	siteMonthData.forEach(function(oneRowValue, oneRowIndex) {
 		newData[oneRowValue['timestamp']] = [];
 		// var dataTower = oneRowValue['data'];
 		var oneTower = oneRowValue['data'];
 		// console.log(oneRowIndex);
+//		Promise.mapSeries(oneTower, function(val) {
 		oneTower.forEach(function(val,index) {
 			// console.log(">>>>>>>>>>>>>.");
 			var keyList = []
@@ -392,6 +393,7 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 	var listOfTowers = newData[dataListRowWise[0]];
 	// console.log(listOfTowers);
 	var boolUnwantedSheet = false;
+//	Promise.mapSeries(listOfTowers, function(singleTowerValue) {
 	listOfTowers.forEach(function(singleTowerValue,singleTowerIndex) {
 		var towerNameOfSheetObj;
 		if(singleTowerValue['makeBoolean']) {
@@ -404,6 +406,7 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 			towerNameOfSheetObj = excelFile.addWorksheet(singleTowerValue['name'] + ' - operational parameter',generalOptions);
 			createFirstSheet(towerNameOfSheetObj,singleTowerValue['header']);
 		}
+//		Promise.mapSeries(siteMonthData, function(rowWiseData, rowWiseDataIndex) {
 		siteMonthData.forEach(function(rowWiseData, rowWiseDataIndex) {
 			var dateFrom = rowWiseData['timestamp']*60;
 			dateFromCurrent = tz(dateFrom*1000);
@@ -433,25 +436,19 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 		// // console.log(newData);
 		var forthSheet = excelFile.addWorksheet('General comments, summary',generalOptions);
 
-//		excelFile.write(generalInfoSite['site'] + '.xlsx', function (err, stats) {
-//		    if (err) {
-//		        console.error(err);
-//		    }
-//		    console.log(generalInfoSite['site'] + ".xlsx  # created");
-//		});
-		excelFile.writeToBuffer().then(function(objExcelBuffer) {
+		return excelFile.writeToBuffer().then(function(objExcelBuffer) {
 
             var mailOptions = {
                 from: '"Chembond Flux" <admin@chembondflux.com>', // sender address
                 to: email, // list of receivers
-               subject: '[Chembond Flux] Site Daily Report ✔', // Subject line
+                subject: '[Chembond Flux] Site Daily Report ✔', // Subject line
                 attachments: [{   // utf-8 string as an attachment
                     filename: generalInfoSite['site'] + '.xlsx',
                     cid: generalInfoSite['site'],
                     content: objExcelBuffer
                 }]
             };
-            transporter.sendMail(mailOptions, (error, info) => {
+            return transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
                     return console.log(error);
                 }
@@ -459,7 +456,9 @@ function createSheet(siteMonthData) { // towerName,dateFrom
                 console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
             });
 		});
+	}else {
 
+        return Promise.resolve('OK');
 	}
 }
 
@@ -471,6 +470,7 @@ function storeDataFunction(sheetId, data, dateFrom, headerList,oneRowIndex) {
 	sheetId.cell(dataIndexStartI,1).string(dateFrom).style({border:{right:{style:'thick'}}});
 	// sheetId.cell(dataIndexStartI,1).string(dateFrom);
 	// console.log(data['name']);
+
 	headerList.forEach(function(headerListValue, headerListIndex) {
 		// console.log(data[headerListValue]);
 		if(data[headerListValue] !== undefined) {
@@ -494,21 +494,26 @@ function storeDataFunction(sheetId, data, dateFrom, headerList,oneRowIndex) {
 function writeDbToExcel() {
 	var currentMonthStart = new tz().startOf("month").unix();
 	var currentMonthStartMin  = currentMonthStart/60;
-	MongoClient.connect(url, function(err, db) {
+    MongoClient.connect(url, function(err, db) {
 
-		// if (err) throw err;
-		db.listCollections().toArray(function(err, collInfos) {
-			Promise.map(collInfos, function(tableName) {
-//			collInfos.forEach(function(tableName) {
-				var tableNameSite = tableName['name'];
-				console.log(tableNameSite);
-				db.collection(tableNameSite).find({"timestamp":{$gte:currentMonthStartMin}}).toArray(function(err, siteData) {
-					console.log(siteData);
-					createSheet(siteData);
-				});
-			});
-			db.close();
-		});
+        db.listCollections().toArray(function(err, collInfos) {
+            console.log(collInfos);
+            return Promise.mapSeries(collInfos, function(tableName) {
+//    			collInfos.forEach(function(tableName) {
+                var tableNameSite = tableName['name'];
+                console.log(tableNameSite);
+                return db.collection(tableNameSite).find({"timestamp":{$gte:currentMonthStartMin}}).toArray().then(function(siteData){
+                    return createSheet(siteData);
+                }).then(function(){
+                    return Promise.resolve('OK');
+                });
+            }).then(function(){
+                console.log("db closes>>>>>>>>>>>>>>>>");
+                db.close();
+            }).catch(function(err) {
+                console.log("First promise error>>>>>>.");
+            });
+        });
     });
 }
 
