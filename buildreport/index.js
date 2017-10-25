@@ -21,7 +21,7 @@ var transporter = nodemailer.createTransport({
 
 
 var header1IndexStart = 1
-var header1IndexEnd = 10
+var header1IndexEnd = 6
 var header2IndexStart = header1IndexStart + header1IndexEnd
 var header3IndexStart = header2IndexStart + 1
 var header3IndexEnd = header3IndexStart + 1
@@ -255,9 +255,9 @@ function createFirstSheet(firstSheet,firstSheetHeader2) {
 	            rowOff: 0
 	        },
 	        to: {
-	            col: header1IndexEnd-4,
+	            col: header1IndexEnd,
 	            colOff: 0,
-	            row: header1IndexEnd-1,
+	            row: header1IndexEnd,
 	            rowOff: 0
 	        }
 	    }
@@ -330,7 +330,13 @@ function createSecondSheet(secondSheet,firstSheetHeader2) {
 	secondSheet.cell(dataIndexStart,1,dataIndexEnd,firstSheetHeader2.length).style(generalBorder);
 }
 
+function createThirdSheet(thirdSheet) {
 
+	thirdSheetHeader2 = ['Date','Dry Bulb Temp','Wet Bulb Temp','Approach','Return Temp','Supply Temp','Δ T','Humidity',
+	'Tower Efficiency','Make up','CT Circulation rate','Total Blow Down','Evaporation Rate']
+
+	SheetFormat(thirdSheet, thirdSheetHeader2);
+}
 
 function createSheet(siteMonthData) { // towerName,dateFrom
 	var excelFile = new excel.Workbook();
@@ -358,16 +364,16 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 			if(singleTowerID) {
 				var currentData = val[singleTowerID];
 				if(currentData) {
-					var check = {}
-					check['name'] = currentData['gen']['name'];
+					var generalTowerData = {}
+					generalTowerData['name'] = currentData['gen']['name'];
 					// check['date'] = dateFormat;
 					var towerMakeCheck = currentData['gen']['type'].toLowerCase();
 					if(towerMakeCheck.match('make')) {
 						// ch[currentData['gen']['name']] =
-						check['makeBoolean'] = true;
+						generalTowerData['makeBoolean'] = true;
 					}
 					else {
-						check['makeBoolean'] = false;
+						generalTowerData['makeBoolean'] = false;
 					}
 					headerList = ['date'];
 
@@ -377,9 +383,9 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 							headerList.push(objHeader);
 						}
 					}
-					check['header'] = headerList;
+					generalTowerData['header'] = headerList;
 					// newData[currentData['gen']['name']] = check;
-					newData[oneRowValue['timestamp']].push(check);
+					newData[oneRowValue['timestamp']].push(generalTowerData);
 				}
 			}
 		});
@@ -399,12 +405,12 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 		if(singleTowerValue['makeBoolean']) {
 			boolUnwantedSheet = true;
 			towerNameOfSheetObj = excelFile.addWorksheet(singleTowerValue['name'] + ' - make up',generalOptions);
-			createSecondSheet(towerNameOfSheetObj,singleTowerValue['header']);
+			createFirstSheet(towerNameOfSheetObj,singleTowerValue['header']);
 		}
 		else {
 			boolUnwantedSheet = true;
 			towerNameOfSheetObj = excelFile.addWorksheet(singleTowerValue['name'] + ' - operational parameter',generalOptions);
-			createFirstSheet(towerNameOfSheetObj,singleTowerValue['header']);
+			createSecondSheet(towerNameOfSheetObj,singleTowerValue['header']);
 		}
 //		Promise.mapSeries(siteMonthData, function(rowWiseData, rowWiseDataIndex) {
 		siteMonthData.forEach(function(rowWiseData, rowWiseDataIndex) {
@@ -457,7 +463,6 @@ function createSheet(siteMonthData) { // towerName,dateFrom
             });
 		});
 	}else {
-
         return Promise.resolve('OK');
 	}
 }
