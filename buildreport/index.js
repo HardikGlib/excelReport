@@ -508,10 +508,10 @@ function writeDbToExcel(siteId) {
 //                    return createSheet(siteData);
 //                console.log(siteData);
                 var topic = PubSub.topic('send_report');
-                return topic.publish(siteData).then(function(data) {
+                return topic.publish({data:siteData}).then(function(data) {
                     console.log(data);
                 }).catch(function(err){
-                    console.log("topic publish errr" + err);
+                    console.log("topic :::::::::::::::::: publish errr" + err);
                     // return Promise.reject(err);
                 });
             }).then(function(){
@@ -556,7 +556,9 @@ function writeDbToExcel(siteId) {
 
 exports.updateDb = function(event) {
 	console.log("first call enter>>>");
-	var siteId = event.data.id;
-	console.log(siteId);
-    return writeDbToExcel(siteId);
+	var siteId = event.data;
+	const siteStr = Buffer.from(siteId.data,'base64').toString();
+    var site = JSON.parse(siteStr);
+    console.log(site.id);
+    return writeDbToExcel(site.id);
 };

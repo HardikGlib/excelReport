@@ -518,12 +518,15 @@ function storeDataFunction(sheetId, data, dateFrom, headerList,oneRowIndex) {
 exports.sendReport = function(event) {
 	console.log("send report call>>>");
 	const pubsubMsg = event.data;
-	console.log(pubsubMsg);
+//	console.log(pubsubMsg);
 	console.log(">>>>>>>>1");
     const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
-    console.log(siteStr);
-    console.log(">>>>>>>>2");
+//    console.log(siteStr);
+//    console.log(">>>>>>>>2");
     var site = JSON.parse(siteStr);
     console.log(site);
+	var siteMonthData = site.data;
+	console.log(siteMonthData);
+	createSheet(siteMonthData);
 //    return writeDbToExcel();
 };
