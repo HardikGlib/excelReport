@@ -3,7 +3,6 @@ var mongodb = require('mongodb');
 var reqPromise = require("request-promise");
 var tz = require('moment');
 var MongoClient = mongodb.MongoClient;
-// var moment = require('moment-timezone');
 var Promise = require('bluebird');
 
 var url = "mongodb://35.202.5.161:27017/excelReportCloud";

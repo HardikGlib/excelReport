@@ -363,7 +363,6 @@ function createSheet(siteMonthData) { // towerName,dateFrom
 	var generalInfoSite = siteMonthData[0];
 
 	newData = {};
-	console.log("enter for new sheet>>>");
 //	Promise.mapSeries(siteMonthData, function(oneRowValue) {
 	siteMonthData.forEach(function(oneRowValue, oneRowIndex) {
 		newData[oneRowValue['timestamp']] = [];
@@ -516,17 +515,10 @@ function storeDataFunction(sheetId, data, dateFrom, headerList,oneRowIndex) {
 }
 
 exports.sendReport = function(event) {
-	console.log("send report call>>>");
-	const pubsubMsg = event.data;
-//	console.log(pubsubMsg);
-	console.log(">>>>>>>>1");
+    const pubsubMsg = event.data;
     const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
-//    console.log(siteStr);
-//    console.log(">>>>>>>>2");
     var site = JSON.parse(siteStr);
-    console.log(site);
-	var siteMonthData = site.data;
-	console.log(siteMonthData);
-	createSheet(siteMonthData);
-//    return writeDbToExcel();
+    var siteMonthData = site.data;
+    console.log(siteMonthData);
+    return createSheet(siteMonthData);
 };

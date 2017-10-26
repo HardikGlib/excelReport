@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "mongodb": "~2.2.33",
-    "request": "~2.83.0",
     "request-promise": "~4.2.2",
     "moment": "~2.19.1",
     "bluebird": "~3.5.1"
