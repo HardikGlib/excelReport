@@ -1,3 +1,6 @@
+const PubSub = require('@google-cloud/pubsub')({
+	promise: require('bluebird')
+});
 // var Promise = require('bluebird').Promise;
 var mongodb = require('mongodb');
 var reqPromise = require("request-promise");
@@ -83,8 +86,8 @@ exports.getSiteData = function(event) {
     const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
     var site = JSON.parse(siteStr);
     console.log(site['name']);
-    var currentStart = new tz().startOf("day").unix();
-	var currentEnd = new tz().endOf("day").unix();
+    var currentStart = new tz().startOf("month").unix();
+	var currentEnd = new tz().endOf("day").subtract(1, 'day').unix();
 	var currentStartMin = currentStart/60;
 	var currentEndMin = currentEnd/60;
 
@@ -95,9 +98,9 @@ exports.getSiteData = function(event) {
 	 	return getTowerMetaData(singleTowerId).then(function(metaData) {
 	 		var metaDataJson = JSON.parse(metaData).message;
 	 		// console.log(metaDataJson['name']);
-	 			var obj_metaDataJson = JSON.parse(metaDataJson['attribs']);
+            var obj_metaDataJson = JSON.parse(metaDataJson['attribs']);
 
-	 			if(obj_metaDataJson[0]['type'] ==='OFFLINE') {
+            if(obj_metaDataJson[0]['type'] ==='OFFLINE') {
 	 			return getTowerRawData(singleTowerId, currentStartMin, currentEndMin).then(function(rawData) {
 	 				var rawDataJson = JSON.parse(rawData).message;
 	 				// console.log(rawDataJson);
@@ -113,16 +116,19 @@ exports.getSiteData = function(event) {
 
 	 					rawDataJsonObj.forEach(function(specRawValue, specRawIndex) {
 	 						if(specRawValue[specFactorId] !== undefined) {
+	 						    var curTimestamp = specRawValue['timestamp'];
+                                objListTimestamp = [curTimestamp, specRawValue[specFactorId]];
+                                dataDict[specFactorId].push(objListTimestamp);
 	 							// console.log(specRawValue[specFactorId]);
-	 							dataDict[specFactorId].push(specRawValue[specFactorId]);
+//	 							dataDict[specFactorId].push(specRawValue[specFactorId]);
 	 							// dataDict['timestamp'].push(specRawValue['timestamp']);
 	 						}
 	 					});
 	 					dataDict[specFactorId].push({'low':specValue.low,'high':specValue.high,'type':specValue.type});
 	 				});
 	 				// dataDict['name'] = metaDataJson['name'];
-	 				dataDict['gen']['name'] = metaDataJson['name'];
-	 				dataDict['gen']['type'] = metaDataJson['type'];
+//	 				dataDict['gen']['name'] = metaDataJson['name'];
+//	 				dataDict['gen']['type'] = metaDataJson['type'];
 	 				return dataDict;
 
 	 			}).then(function(rawDataReturn) {
@@ -131,6 +137,8 @@ exports.getSiteData = function(event) {
 	 				console.log("firing error");
 	 			});
 
+	 		} else {
+	 		    return Promise.resolve("null");
 	 		}
 
 
@@ -144,9 +152,19 @@ exports.getSiteData = function(event) {
 	 	});
 
 	 }).then(function(siteListReturn) {
+	    var topic = PubSub.topic('build_report');
+        return topic.publish({
+            id: site['id'],
+            data: siteListReturn
+        }).then(function(data) {
+            console.log(data);
+        }).catch(function(err){
+            console.log("topic publish errr" + err);
+            // return Promise.reject(err);
+        });
 	 	// console.log("data insert to db");
-	 	tableCheck(site['id']);
-	 	insertDataToDb(currentStartMin,site['id'],siteListReturn,site['name']);
+//	 	tableCheck(site['id']);
+//	 	insertDataToDb(currentStartMin,site['id'],siteListReturn,site['name']);
 	 }).catch(function(err) {
 	 	console.log("site error " + err);
 	 });

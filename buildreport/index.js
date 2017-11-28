@@ -63,8 +63,16 @@ function writeDbToExcel(siteId) {
 
 
 exports.updateDb = function(event) {
-	var siteId = event.data;
-	const siteStr = Buffer.from(siteId.data,'base64').toString();
+//	var siteId = event.data;
+//	const siteStr = Buffer.from(siteId.data,'base64').toString();
+//    var site = JSON.parse(siteStr);
+//    return writeDbToExcel(site.id);
+    const pubsubMsg = event.data;
+    const siteStr = Buffer.from(pubsubMsg.data,'base64').toString();
     var site = JSON.parse(siteStr);
-    return writeDbToExcel(site.id);
+    var siteMonthData = site.data;
+    var siteId = site.id;
+    console.log(siteMonthData);
+    console.log(siteId);
+//    return getHeaderList(siteMonthData, siteId);
 };
